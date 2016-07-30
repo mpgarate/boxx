@@ -34,15 +34,13 @@ pub enum Dec {
 
 #[derive(Clone, Debug)] 
 pub struct State {
-  addr: usize,
-  pub mem: Vec<HashMap<usize, Expr>>,
+  pub mem: Vec<HashMap<String, Expr>>,
   pub expr: Expr,
 }
 
 impl State {
   pub fn from(e: Expr) -> State {
     return State {
-      addr: 0,
       mem: vec!(HashMap::new()),
       expr: e,
     }
@@ -56,44 +54,31 @@ impl State {
     self.mem.pop();
   }
 
-  pub fn push(&mut self, s: State) {
-    match s.mem.last() {
-      Some(map) => self.mem.push(map.clone()),
-      _ => (),
-    }
-  }
-
   pub fn with(&mut self, e1: Expr) -> &mut State {
     self.expr = e1;
     return self;
   }
 
-  pub fn alloc(&mut self, v1: Expr) -> usize {
-    let mut addr = self.addr;
-    addr += 1;
-    self.addr = addr;
-
-    self.mem[0].insert(addr, v1);
-
-    return self.addr;
+  pub fn alloc(&mut self, s: String, v1: Expr) {
+    self.mem.last_mut().unwrap().insert(s, v1);
   }
 
-  pub fn assign(&mut self, addr: usize, v1: Expr) {
-    match self.mem.iter_mut().find(|m| m.contains_key(&addr)) {
-      Some(m) => m.insert(addr, v1),
+  pub fn assign(&mut self, s: String, v1: Expr) {
+    match self.mem.iter_mut().rev().find(|m| m.contains_key(&s)) {
+      Some(m) => m.insert(s, v1),
       None => {
-        debug!("cannot assign; no value for addr {:?}", addr);
-        panic!("cannot assign; no value for addr")
+        debug!("cannot assign; no value for s {:?}", s);
+        panic!("cannot assign; no value for s")
       }
     };
   }
 
-  pub fn get(&mut self, addr: usize) -> Expr {
-    match self.mem.iter().find(|m| m.contains_key(&addr)) {
-      Some(m) => m.get(&addr).unwrap().clone(),
+  pub fn get(&mut self, s: String) -> Expr {
+    match self.mem.iter().rev().find(|m| m.contains_key(&s)) {
+      Some(m) => m.get(&s).unwrap().clone(),
       None => {
-        debug!("no value for addr {:?}", addr);
-        panic!("no value for addr")
+        debug!("no value for s{:?}", s);
+        panic!("no value for s")
       }
     }
   }
@@ -110,7 +95,7 @@ pub enum Expr {
   Decl(Dec, Box<Expr>, Box<Expr>, Box<Expr>),
   Func(Option<Box<Expr>>, Box<Expr>, Vec<Expr>),
   FnCall(Box<Expr>, Vec<Expr>),
-  Addr(usize),
+  Addr(String),
 }
 
 impl Expr {
@@ -169,9 +154,10 @@ impl Expr {
     }
   }
 
-  pub fn to_addr(&self) -> usize {
-    match *self {
+  pub fn to_addr(&self) -> String {
+    match self.clone() {
       Addr(a) => a,
+      Var(s) => s,
       _ => {
         debug!("cant turn into addr: {:?}", self);
         panic!()

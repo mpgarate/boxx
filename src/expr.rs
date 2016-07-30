@@ -60,13 +60,17 @@ fn subst(e: Expr, x: Expr, v: Expr) -> Expr {
 
 pub fn step(state: &mut State) -> &mut State {
   let st_step = |s: &mut State, e1: &Expr| {
-    step(s.with(e1.clone())).expr.clone()
+    debug!("st_step");
+    s.begin_scope();
+    let e2 = step(s.with(e1.clone())).expr.clone();
+    s.end_scope();
+    e2
   };
+  
 
-  state.begin_scope();
-
-  debug!("step(e) : {:?}", state.expr);
-  debug!("step(state) : {:?}", state.mem);
+  debug!("step: ");
+  debug!("expr: {:?}", state.expr);
+  debug!("mem: {:?}", state.mem);
   let e1 = match state.expr.clone() {
     Addr(addr) => {
       state.get(addr)
@@ -136,8 +140,7 @@ pub fn step(state: &mut State) -> &mut State {
       *e2.clone()
     },
     Bop(Assign, ref v1, ref v2) if v1.is_addr() && v2.is_value() => {
-      let addr = v1.to_addr();
-      state.assign(addr.clone(), *v2.clone());
+      state.assign(v1.to_addr(), *v2.clone());
       debug!("done assigning {:?}", state.mem);
       *v2.clone()
     },
@@ -150,10 +153,11 @@ pub fn step(state: &mut State) -> &mut State {
     Decl(DConst, ref x, ref v1, ref e2) if v1.is_value() => {
       subst(*e2.clone(), *x.clone(), *v1.clone())
     },
-    Decl(DVar, ref x, ref v1, ref e2) if v1.is_value() => {
+    Decl(DVar, ref x, ref v1, ref e2) if v1.is_value()=> {
       debug!("allocing {:?}", v1);
-      let addr = state.alloc(*v1.clone());
-      subst(*e2.clone(), *x.clone(), Expr::Addr(addr))
+      state.alloc(x.to_addr(), *v1.clone());
+
+      subst(*e2.clone(), *x.clone(), Expr::Addr(x.to_addr()))
     },
     // TODO: check that all of es are values
     FnCall(ref v1, ref es) if v1.is_func() => {
@@ -235,9 +239,6 @@ pub fn step(state: &mut State) -> &mut State {
     }
   };
 
-  debug!("returning with mem {:?}" , state.mem);
-  debug!("returning with e {:?}" , state.expr);
-  state.end_scope();
   state.with(e1)
 }
 
@@ -256,3 +257,20 @@ pub fn boxx(input: &str) -> Expr {
     }
   }
 }
+
+pub fn evaluate(input: &str, mut state: &mut State) -> Expr {
+  println!("evaluating...");
+  println!("e: {:?}", state.expr);
+  println!("mem: {:?}", state.mem);
+
+  state.with(parse(input));
+
+  loop {
+    if state.expr.is_value() {
+      return state.expr.clone()
+    } else {
+      step(&mut state);
+    }
+  }
+}
+

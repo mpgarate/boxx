@@ -1,10 +1,13 @@
 extern crate boxx;
 
-use boxx::expr::{boxx};
+use boxx::expr::{evaluate};
+use boxx::ast::{State, Expr};
 
 use std::io::{Write, stdout, stdin};
 
 fn main() {
+  let mut state = State::from(Expr::Int(0));
+
   loop {
     print!("boxx> ");
     let _ = stdout().flush();
@@ -15,10 +18,11 @@ fn main() {
         if input == "exit\n".to_string() { 
           break;
         }
-        println!("{:?}", boxx(&input))
+        println!("{:?}", evaluate(&input, &mut state))
       },
       Err(e) => print!("error: {}", e)
     }
     let _ = stdout().flush();
   }
 }
+
