@@ -83,7 +83,7 @@ Expressions are evaluated using a [small step interpreter](https://github.com/mp
 
 boxx uses a hand-rolled [recursive descent parser](https://github.com/mpgarate/boxx/blob/master/src/parser/parser.rs) rather than a parser generator in order to have more control of the implementation and avoid dependencies. This is probably the messiest part of the code and source of the trickiest bugs. 
 
-boxx liberally uses Rust's [Box module](https://doc.rust-lang.org/std/boxed/) for heap allocation. This lets us worry a bit less about lifetimes, since the contents are freed when they go out of scope. 
+boxx liberally uses Rust's [Box module](https://doc.rust-lang.org/std/boxed/) for heap allocation. This lets us worry a bit less about lifetimes, since the contents are freed when they go out of scope. As a result, the full AST is copied around way more than necessary. This inspired the temporary project name. 
 
 ### Features in progress
  - Human-readable errors for parsing and evaluation. Most cases are covered, but the copy could be cleaned up. 
