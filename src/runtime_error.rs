@@ -28,8 +28,8 @@ impl fmt::Display for RuntimeError {
       RuntimeError::InvalidMemoryState(ref s) => write!(f, "Unexpected internal memory state: {}", s),
       RuntimeError::TooManyIterations(ref n) => write!(f, "Too many iterations while evaluating expression: {}", n),
       RuntimeError::ParserError(ref err) => write!(f, "Parser error: {}", err),
-      RuntimeError::IntegerOverflow => write!(f, "Value grew too large"),
-      RuntimeError::IntegerUnderflow => write!(f, "Value grew too small"),
+      RuntimeError::IntegerOverflow => write!(f, "Integer overflow: Integer underflow: Value grew too large"),
+      RuntimeError::IntegerUnderflow => write!(f, "Integer underflow: Value grew too small"),
     }
   }
 }
@@ -45,8 +45,8 @@ impl error::Error for RuntimeError {
       RuntimeError::InvalidMemoryState(_) => "Unexpected internal memory state",
       RuntimeError::TooManyIterations(_) => "Too many iterations: {}",
       RuntimeError::ParserError(ref err) => err.description(),
-      RuntimeError::IntegerOverflow => "Value grew too large",
-      RuntimeError::IntegerUnderflow => "Value grew too small",
+      RuntimeError::IntegerOverflow => "Integer overflow: Value grew too large",
+      RuntimeError::IntegerUnderflow => "Integer underflow: Value grew too small",
     }
   }
 
