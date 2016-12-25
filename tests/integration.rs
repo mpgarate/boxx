@@ -56,6 +56,56 @@ mod tests {
   }
 
   #[test]
+  pub fn test_integer_overflow() {
+    let _ = env_logger::init();
+
+    let max_int = isize::max_value();
+    let min_int = isize::min_value();
+
+    assert_eq!(
+      Ok(Expr::Int(max_int)),
+      boxx(format!("
+        {}
+      ", max_int).as_str())
+    );
+
+    assert_eq!(
+      Err(RuntimeError::IntegerOverflow),
+      boxx(format!("
+        {} + 1
+      ", max_int).as_str())
+    );
+
+    assert_eq!(
+      Err(RuntimeError::IntegerOverflow),
+      boxx(format!("
+        {} * 2
+      ", max_int).as_str())
+    );
+
+    // we have to add 1 in order to parse successfully, since it is parsed in
+    // as a positive integer and then negated in the interpreter
+    assert_eq!(
+      Err(RuntimeError::IntegerUnderflow),
+      boxx(format!("
+        {} - 2
+      ", min_int + 1).as_str())
+    );
+
+    assert_eq!(
+      Err(RuntimeError::IntegerUnderflow),
+      boxx(format!("
+        ({} - 1) / -1
+      ", min_int + 1).as_str())
+    );
+
+    assert_eq!(
+      Err(RuntimeError::IntegerUnderflow),
+      boxx("1 % 0")
+    );
+  }
+
+  #[test]
   pub fn test_print() {
     let _ = env_logger::init();
 

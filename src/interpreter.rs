@@ -65,7 +65,13 @@ impl Interpreter {
         let n2 = e2.to_int()?;
 
         // rust % gives the remainder, not modulus
-        let result = ((n1 % n2) + n2) % n2;
+        // let result = ((n1 % n2) + n2) % n2;
+        let result = n1.checked_rem(n2)
+          .ok_or(RuntimeError::IntegerUnderflow)?
+          .checked_add(n2)
+          .ok_or(RuntimeError::IntegerOverflow)?
+          .checked_rem(n2)
+          .ok_or(RuntimeError::IntegerUnderflow)?;
 
         Int(result)
       },
@@ -82,16 +88,28 @@ impl Interpreter {
         Bool(e1.to_int()? >= e2.to_int()?)
       },
       Bop(Plus, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Int(e1.to_int()? + e2.to_int()?)
+        match e1.to_int()?.checked_add(e2.to_int()?) {
+          Some(n) => Int(n),
+          None => return Err(RuntimeError::IntegerOverflow),
+        }
       },
       Bop(Minus, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Int(e1.to_int()? - e2.to_int()?)
+        match e1.to_int()?.checked_sub(e2.to_int()?) {
+          Some(n) => Int(n),
+          None => return Err(RuntimeError::IntegerUnderflow),
+        }
       },
       Bop(Times, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Int(e1.to_int()? * e2.to_int()?)
+        match e1.to_int()?.checked_mul(e2.to_int()?) {
+          Some(n) => Int(n),
+          None => return Err(RuntimeError::IntegerOverflow),
+        }
       },
       Bop(Div, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Int(e1.to_int()? / e2.to_int()?)
+        match e1.to_int()?.checked_div(e2.to_int()?) {
+          Some(n) => Int(n),
+          None => return Err(RuntimeError::IntegerUnderflow),
+        }
       },
       Bop(Seq, ref v1, ref e2) if v1.is_value() => {
         *e2.clone()

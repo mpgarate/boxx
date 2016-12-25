@@ -11,8 +11,10 @@ pub enum RuntimeError {
   InvalidConstAssignment(Expr, String),
   InvalidTypeConversion(String, Expr),
   InvalidMemoryState(String),
-  ParserError(ParserError),
   TooManyIterations(usize),
+  ParserError(ParserError),
+  IntegerOverflow,
+  IntegerUnderflow,
 }
 
 impl fmt::Display for RuntimeError {
@@ -26,6 +28,8 @@ impl fmt::Display for RuntimeError {
       RuntimeError::InvalidMemoryState(ref s) => write!(f, "Unexpected internal memory state: {}", s),
       RuntimeError::TooManyIterations(ref n) => write!(f, "Too many iterations while evaluating expression: {}", n),
       RuntimeError::ParserError(ref err) => write!(f, "Parser error: {}", err),
+      RuntimeError::IntegerOverflow => write!(f, "Value grew too large"),
+      RuntimeError::IntegerUnderflow => write!(f, "Value grew too small"),
     }
   }
 }
@@ -41,6 +45,8 @@ impl error::Error for RuntimeError {
       RuntimeError::InvalidMemoryState(_) => "Unexpected internal memory state",
       RuntimeError::TooManyIterations(_) => "Too many iterations: {}",
       RuntimeError::ParserError(ref err) => err.description(),
+      RuntimeError::IntegerOverflow => "Value grew too large",
+      RuntimeError::IntegerUnderflow => "Value grew too small",
     }
   }
 
@@ -54,6 +60,8 @@ impl error::Error for RuntimeError {
       RuntimeError::InvalidMemoryState(_) => None,
       RuntimeError::TooManyIterations(_) => None,
       RuntimeError::ParserError(ref err) => Some(err),
+      RuntimeError::IntegerOverflow => None,
+      RuntimeError::IntegerUnderflow => None,
     }
   }
 }
