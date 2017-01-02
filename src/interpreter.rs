@@ -133,14 +133,14 @@ impl Interpreter {
           false => *e3.clone(),
         }
       },
-      Decl(DConst, ref x, ref v1, ref e2) if v1.is_value() => {
+      Decl(DConst, ref x, ref v1, ref mut e2) if v1.is_value() => {
         self.state.alloc_const(x.to_var()?, *v1.clone())?;
-        *e2.clone()
+        *get_and_replace_mem!(e2)
       },
-      Decl(DVar, ref x, ref v1, ref e2) if x.is_var() && v1.is_value() => {
+      Decl(DVar, ref x, ref v1, ref mut e2) if x.is_var() && v1.is_value() => {
         debug!("allocing {:?}", v1);
         self.state.alloc(x.to_var()?, *v1.clone())?;
-        *e2.clone()
+        *get_and_replace_mem!(e2)
       },
       // lambda lift so we can use iter() in guard
       // https://github.com/rust-lang/rfcs/issues/1006
@@ -171,7 +171,13 @@ impl Interpreter {
       },
       While(ref v1, ref e1o, _, ref e2o, ref e3) if v1.is_value() => {
         match v1.to_bool()? {
-          true => While(Box::new(*e1o.clone()), e1o.clone(), e2o.clone(), e2o.clone(), e3.clone()),
+          true => While(
+            Box::new(*e1o.clone()),
+            e1o.clone(),
+            e2o.clone(),
+            e2o.clone(),
+            e3.clone()
+          ),
           false => *e3.clone(),
         }
       },
@@ -182,18 +188,18 @@ impl Interpreter {
       /**
        * Search Cases
        */
-      Bop(ref op, ref v1, ref e2) if v1.is_value() => {
+      Bop(ref op, ref mut v1, ref mut e2) if v1.is_value() => {
         Bop(
           op.clone(),
-          Box::new(*v1.clone()),
-          Box::new(self.step(*e2.clone())?)
+          Box::new(*get_and_replace_mem!(v1)),
+          Box::new(self.step(*get_and_replace_mem!(e2))?)
         )
       },
-      Bop(Assign, ref v1, ref e2) if v1.is_var() => {
+      Bop(Assign, ref mut v1, ref mut e2) if v1.is_var() => {
         Bop(
           Assign,
-          Box::new(*v1.clone()),
-          Box::new(self.step(*e2.clone())?)
+          Box::new(*get_and_replace_mem!(v1)),
+          Box::new(self.step(*get_and_replace_mem!(e2))?)
         )
       },
       Bop(op, e1, e2) => {
@@ -205,16 +211,24 @@ impl Interpreter {
       Ternary(e1, e2, e3) => {
         Ternary(Box::new(self.step(*e1)?), e2, e3)
       },
-      While(ref e1, ref e1o, ref v2, ref e2o, ref e3) if v2.is_value() => {
-        While(Box::new(self.step(*e1.clone())?), e1o.clone(), v2.clone(), e2o.clone(), e3.clone())
+      While(ref mut e1, ref mut e1o, ref mut v2, ref mut e2o, ref mut e3) if v2.is_value() => {
+        While(
+          Box::new(
+            self.step(*get_and_replace_mem!(e1))?
+          ),
+          get_and_replace_mem!(e1o),
+          get_and_replace_mem!(v2),
+          get_and_replace_mem!(e2o),
+          get_and_replace_mem!(e3),
+        )
       },
       While(e1, e1o, e2, e2o, e3) => {
         While(e1, e1o, Box::new(self.step(*e2)?), e2o, e3)
       },
       Decl(dt, addr, e1, e2) => {
-        Decl(dt, Box::new(*addr.clone()), Box::new(self.step(*e1)?), e2)
+        Decl(dt, addr, Box::new(self.step(*e1)?), e2)
       },
-      FnCall(ref v1, ref args) if v1.is_func() => {
+      FnCall(ref mut v1, ref args) if v1.is_func() => {
         let mut found_nonvalue = false;
 
         let stepped_args: Result<Vec<Expr>> = args.iter().map(|e| {
@@ -226,7 +240,7 @@ impl Interpreter {
           }
         }).collect();
 
-        FnCall(v1.clone(), stepped_args?)
+        FnCall(get_and_replace_mem!(v1), stepped_args?)
       },
       FnCall(e1, args) => {
         FnCall(Box::new(self.step(*e1)?), args)
