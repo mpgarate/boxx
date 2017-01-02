@@ -25,7 +25,7 @@ impl Interpreter {
     debug!("step(e) : {:?}", e);
     debug!("step(self.state) : {:?}", self.state.mem);
 
-    let e1 = match e.clone() {
+    let e1 = match e {
       Var(x) => {
         match self.state.get(x.clone()) {
           Some(e) => e,
