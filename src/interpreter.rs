@@ -7,8 +7,15 @@ use expr::Dec::*;
 use state::State;
 use runtime_error::RuntimeError;
 use std::result;
+use std::mem::replace;
 
 pub type Result<T> = result::Result<T, RuntimeError>;
+
+macro_rules! get_and_replace_mem {
+  ( $x:expr ) => {
+    replace($x, Box::new(Undefined)) // arbitrary, just for the return value
+  }
+}
 
 pub struct Interpreter {
   pub state: State,
@@ -21,7 +28,7 @@ impl Interpreter {
     }
   }
 
-  pub fn step(&mut self, e: Expr) -> Result<Expr> {
+  pub fn step(&mut self, mut e: Expr) -> Result<Expr> {
     debug!("step(e) : {:?}", e);
     debug!("step(self.state) : {:?}", self.state.mem);
 
@@ -111,8 +118,8 @@ impl Interpreter {
           None => return Err(RuntimeError::IntegerUnderflow),
         }
       },
-      Bop(Seq, ref v1, ref e2) if v1.is_value() => {
-        *e2.clone()
+      Bop(Seq, ref v1, ref mut e2) if v1.is_value() => {
+        *get_and_replace_mem!(e2)
       },
       Bop(Assign, ref v1, ref v2) if v1.is_var() && v2.is_value() => {
         let x = v1.to_var()?;
