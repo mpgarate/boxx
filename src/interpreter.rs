@@ -45,14 +45,14 @@ impl Interpreter {
       Uop(Not, box Bool(b)) => {
         Bool(!b)
       },
-      Uop(Neg, ref e1) if e1.is_value() => {
-        Int(-1 * e1.to_int()?)
+      Uop(Neg, box Int(n)) => {
+        Int(-1 * n)
       },
-      Bop(And, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(e1.to_bool()? && e2.to_bool()?)
+      Bop(And, box Bool(b1), box Bool(b2)) => {
+        Bool(b1 && b2)
       },
-      Bop(Or, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(e1.to_bool()? || e2.to_bool()?)
+      Bop(Or, box Bool(b1), box Bool(b2)) => {
+        Bool(b1 || b2)
       },
       Bop(Eq, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
         Bool(*e1 == *e2)
@@ -60,10 +60,7 @@ impl Interpreter {
       Bop(Ne, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
         Bool(*e1 != *e2)
       },
-      Bop(Mod, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        let n1 = e1.to_int()?;
-        let n2 = e2.to_int()?;
-
+      Bop(Mod, box Int(n1), box Int(n2)) => {
         // rust % gives the remainder, not modulus
         // let result = ((n1 % n2) + n2) % n2;
         let result = n1.checked_rem(n2)
@@ -75,38 +72,38 @@ impl Interpreter {
 
         Int(result)
       },
-      Bop(Lt, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(e1.to_int()? < e2.to_int()?)
+      Bop(Lt, box Int(n1), box Int(n2)) => {
+        Bool(n1 < n2)
       },
-      Bop(Gt, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(e1.to_int()? > e2.to_int()?)
+      Bop(Gt, box Int(n1), box Int(n2)) => {
+        Bool(n1 > n2)
       },
-      Bop(Leq, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(e1.to_int()? <= e2.to_int()?)
+      Bop(Leq, box Int(n1), box Int(n2)) => {
+        Bool(n1 <= n2)
       },
-      Bop(Geq, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(e1.to_int()? >= e2.to_int()?)
+      Bop(Geq, box Int(n1), box Int(n2)) => {
+        Bool(n1 >= n2)
       },
-      Bop(Plus, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        match e1.to_int()?.checked_add(e2.to_int()?) {
+      Bop(Plus, box Int(n1), box Int(n2)) => {
+        match n1.checked_add(n2) {
           Some(n) => Int(n),
           None => return Err(RuntimeError::IntegerOverflow),
         }
       },
-      Bop(Minus, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        match e1.to_int()?.checked_sub(e2.to_int()?) {
+      Bop(Minus, box Int(n1), box Int(n2)) => {
+        match n1.checked_sub(n2) {
           Some(n) => Int(n),
           None => return Err(RuntimeError::IntegerUnderflow),
         }
       },
-      Bop(Times, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        match e1.to_int()?.checked_mul(e2.to_int()?) {
+      Bop(Times, box Int(n1), box Int(n2)) => {
+        match n1.checked_mul(n2) {
           Some(n) => Int(n),
           None => return Err(RuntimeError::IntegerOverflow),
         }
       },
-      Bop(Div, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        match e1.to_int()?.checked_div(e2.to_int()?) {
+      Bop(Div, box Int(n1), box Int(n2)) => {
+        match n1.checked_div(n2) {
           Some(n) => Int(n),
           None => return Err(RuntimeError::IntegerUnderflow),
         }
@@ -120,10 +117,10 @@ impl Interpreter {
         debug!("done assigning {:?}", self.state.mem);
         *v2.clone()
       },
-      Ternary(ref v1, ref e2, ref e3) if v1.is_value() => {
-        match v1.to_bool()? {
-          true => *e2.clone(),
-          false => *e3.clone(),
+      Ternary(box Bool(b), box e1, box e2) => {
+        match b {
+          true => e1,
+          false => e2,
         }
       },
       Decl(DConst, ref x, ref v1, ref e2) if v1.is_value() => {
@@ -162,10 +159,10 @@ impl Interpreter {
         self.state.end_scope();
         *v1.clone()
       },
-      While(ref v1, ref e1o, _, ref e2o, ref e3) if v1.is_value() => {
-        match v1.to_bool()? {
-          true => While(Box::new(*e1o.clone()), e1o.clone(), e2o.clone(), e2o.clone(), e3.clone()),
-          false => *e3.clone(),
+      While(box Bool(b), e1o, _, e2o, e3) => {
+        match b {
+          true => While(e1o.clone(), e1o, e2o.clone(), e2o, e3),
+          false => *e3,
         }
       },
       Print(ref v1) if v1.is_value() => {

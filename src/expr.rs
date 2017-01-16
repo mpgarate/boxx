@@ -72,24 +72,10 @@ impl Expr {
     }
   }
 
-  pub fn to_int(&self) -> Result<isize, RuntimeError> {
-    match *self {
-      Int(n) => Ok(n),
-      _ => Err(RuntimeError::InvalidTypeConversion("int".to_string(), self.clone())),
-    }
-  }
-
   pub fn to_var(&self) -> Result<String, RuntimeError> {
     match *self {
       Var(ref x) => Ok(x.clone()),
       _ => Err(RuntimeError::InvalidTypeConversion("var".to_string(), self.clone())),
-    }
-  }
-
-  pub fn to_bool(&self) -> Result<bool, RuntimeError> {
-    match *self {
-      Bool(b) => Ok(b),
-      _ => Err(RuntimeError::InvalidTypeConversion("bool".to_string(), self.clone())),
     }
   }
 }
