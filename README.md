@@ -3,7 +3,7 @@
 Small-step interpreted programming language, written in rust. 
 
 ### Prerequisites
-- [Install Rust](https://www.rust-lang.org/en-US/downloads.html)
+- [Install nightly Rust](https://www.rust-lang.org/en-US/downloads.html)
 
 ### Running
 

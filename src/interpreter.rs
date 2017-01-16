@@ -42,8 +42,8 @@ impl Interpreter {
       /**
        * Base cases
        */
-      Uop(Not, ref e1) if e1.is_value() => {
-        Bool(!e1.to_bool()?)
+      Uop(Not, box Bool(b)) => {
+        Bool(!b)
       },
       Uop(Neg, ref e1) if e1.is_value() => {
         Int(-1 * e1.to_int()?)
