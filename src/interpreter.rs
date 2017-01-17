@@ -172,28 +172,28 @@ impl Interpreter {
       /**
        * Search Cases
        */
-      Bop(ref op, ref v1, ref e2) if v1.is_value() => {
+      Bop(op, box Val(v1), box e2) => {
         Bop(
-          op.clone(),
-          Box::new(*v1.clone()),
-          Box::new(self.step(*e2.clone())?)
+          op,
+          Box::new(Val(v1)),
+          Box::new(self.step(e2)?)
         )
       },
-      Bop(Assign, ref v1, ref e2) if v1.is_var() => {
+      Bop(Assign, box Var(v1), box e2) => {
         Bop(
           Assign,
-          Box::new(*v1.clone()),
-          Box::new(self.step(*e2.clone())?)
+          Box::new(Var(v1)),
+          Box::new(self.step(e2)?)
         )
       },
-      Bop(op, e1, e2) => {
-        Bop(op, Box::new(self.step(*e1)?), e2)
+      Bop(op, box e1, e2) => {
+        Bop(op, Box::new(self.step(e1)?), e2)
       },
-      Uop(op, e1) => {
-        Uop(op, Box::new(self.step(*e1)?))
+      Uop(op, box e1) => {
+        Uop(op, Box::new(self.step(e1)?))
       },
-      Ternary(e1, e2, e3) => {
-        Ternary(Box::new(self.step(*e1)?), e2, e3)
+      Ternary(box e1, e2, e3) => {
+        Ternary(Box::new(self.step(e1)?), e2, e3)
       },
       While(ref e1, ref e1o, ref v2, ref e2o, ref e3) if v2.is_value() => {
         While(Box::new(self.step(*e1.clone())?), e1o.clone(), v2.clone(), e2o.clone(), e3.clone())
