@@ -109,8 +109,8 @@ impl Interpreter {
           None => return Err(RuntimeError::IntegerUnderflow),
         }
       },
-      Bop(Seq, ref v1, ref e2) if v1.is_value() => {
-        *e2.clone()
+      Bop(Seq, box Val(_), box e1) => {
+        e1
       },
       Bop(Assign, box Var(x), box Val(v)) => {
         self.state.assign(x, Val(v.clone()))?;
@@ -123,14 +123,14 @@ impl Interpreter {
           false => e2,
         }
       },
-      Decl(DConst, ref x, ref v1, ref e2) if v1.is_value() => {
-        self.state.alloc_const(x.to_var()?, *v1.clone())?;
-        *e2.clone()
+      Decl(DConst, box Var(x), box Val(v1), box e1) => {
+        self.state.alloc_const(x, Val(v1))?;
+        e1
       },
-      Decl(DVar, ref x, ref v1, ref e2) if x.is_var() && v1.is_value() => {
+      Decl(DVar, box Var(x), box Val(v1), box e1) => {
         debug!("allocing {:?}", v1);
-        self.state.alloc(x.to_var()?, *v1.clone())?;
-        *e2.clone()
+        self.state.alloc(x, Val(v1))?;
+        e1
       },
       // lambda lift so we can use iter() in guard
       // https://github.com/rust-lang/rfcs/issues/1006
@@ -155,9 +155,9 @@ impl Interpreter {
           _ => return Err(RuntimeError::UnexpectedExpr("expected Func".to_string(), *v1.clone()))
         }
       },
-      Scope(ref v1) if v1.is_value() => {
+      Scope(box Val(v)) => {
         self.state.end_scope();
-        *v1.clone()
+        Val(v)
       },
       While(box Val(Bool(b)), e1o, _, e2o, e3) => {
         match b {
@@ -165,8 +165,8 @@ impl Interpreter {
           false => *e3,
         }
       },
-      Print(ref v1) if v1.is_value() => {
-        println!("{}", v1);
+      Print(box Val(v)) => {
+        println!("{}", v);
         Val(Undefined)
       },
       /**

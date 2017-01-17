@@ -86,11 +86,11 @@ impl Expr {
   }
 }
 
-impl fmt::Display for Expr {
+impl fmt::Display for Val {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
-      Val(Val::Int(n)) => write!(f, "{}", n),
-      Val(Val::Bool(b)) => write!(f, "{}", b),
+      Val::Int(n) => write!(f, "{}", n),
+      Val::Bool(b) => write!(f, "{}", b),
       _ => write!(f, "cannot print this thing")
     }
   }
