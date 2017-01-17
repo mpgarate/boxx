@@ -1,6 +1,7 @@
 use parser::parser::{parse};
 use expr::Expr;
 use expr::Expr::*;
+use expr::Val::*;
 use expr::UnOp::*;
 use expr::BinOp::*;
 use expr::Dec::*;
@@ -35,32 +36,32 @@ impl Interpreter {
       /**
        * Values are ineligible for step
        */
-      Int(_) | Bool(_) | Func(_, _, _) | Undefined => {
+      Val(_) => {
         debug!("stepping on a value {:?}", e);
         return Err(RuntimeError::SteppingOnValue(e));
       },
       /**
        * Base cases
        */
-      Uop(Not, box Bool(b)) => {
-        Bool(!b)
+      Uop(Not, box Val(Bool(b))) => {
+        Val(Bool(!b))
       },
-      Uop(Neg, box Int(n)) => {
-        Int(-1 * n)
+      Uop(Neg, box Val(Int(n))) => {
+        Val(Int(-1 * n))
       },
-      Bop(And, box Bool(b1), box Bool(b2)) => {
-        Bool(b1 && b2)
+      Bop(And, box Val(Bool(b1)), box Val(Bool(b2))) => {
+        Val(Bool(b1 && b2))
       },
-      Bop(Or, box Bool(b1), box Bool(b2)) => {
-        Bool(b1 || b2)
+      Bop(Or, box Val(Bool(b1)), box Val(Bool(b2))) => {
+        Val(Bool(b1 || b2))
       },
       Bop(Eq, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(*e1 == *e2)
+        Val(Bool(*e1 == *e2))
       },
       Bop(Ne, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Bool(*e1 != *e2)
+        Val(Bool(*e1 != *e2))
       },
-      Bop(Mod, box Int(n1), box Int(n2)) => {
+      Bop(Mod, box Val(Int(n1)), box Val(Int(n2))) => {
         // rust % gives the remainder, not modulus
         // let result = ((n1 % n2) + n2) % n2;
         let result = n1.checked_rem(n2)
@@ -70,54 +71,53 @@ impl Interpreter {
           .checked_rem(n2)
           .ok_or(RuntimeError::IntegerUnderflow)?;
 
-        Int(result)
+        Val(Int(result))
       },
-      Bop(Lt, box Int(n1), box Int(n2)) => {
-        Bool(n1 < n2)
+      Bop(Lt, box Val(Int(n1)), box Val(Int(n2))) => {
+        Val(Bool(n1 < n2))
       },
-      Bop(Gt, box Int(n1), box Int(n2)) => {
-        Bool(n1 > n2)
+      Bop(Gt, box Val(Int(n1)), box Val(Int(n2))) => {
+        Val(Bool(n1 > n2))
       },
-      Bop(Leq, box Int(n1), box Int(n2)) => {
-        Bool(n1 <= n2)
+      Bop(Leq, box Val(Int(n1)), box Val(Int(n2))) => {
+        Val(Bool(n1 <= n2))
       },
-      Bop(Geq, box Int(n1), box Int(n2)) => {
-        Bool(n1 >= n2)
+      Bop(Geq, box Val(Int(n1)), box Val(Int(n2))) => {
+        Val(Bool(n1 >= n2))
       },
-      Bop(Plus, box Int(n1), box Int(n2)) => {
+      Bop(Plus, box Val(Int(n1)), box Val(Int(n2))) => {
         match n1.checked_add(n2) {
-          Some(n) => Int(n),
+          Some(n) => Val(Int(n)),
           None => return Err(RuntimeError::IntegerOverflow),
         }
       },
-      Bop(Minus, box Int(n1), box Int(n2)) => {
+      Bop(Minus, box Val(Int(n1)), box Val(Int(n2))) => {
         match n1.checked_sub(n2) {
-          Some(n) => Int(n),
+          Some(n) => Val(Int(n)),
           None => return Err(RuntimeError::IntegerUnderflow),
         }
       },
-      Bop(Times, box Int(n1), box Int(n2)) => {
+      Bop(Times, box Val(Int(n1)), box Val(Int(n2))) => {
         match n1.checked_mul(n2) {
-          Some(n) => Int(n),
+          Some(n) => Val(Int(n)),
           None => return Err(RuntimeError::IntegerOverflow),
         }
       },
-      Bop(Div, box Int(n1), box Int(n2)) => {
+      Bop(Div, box Val(Int(n1)), box Val(Int(n2))) => {
         match n1.checked_div(n2) {
-          Some(n) => Int(n),
+          Some(n) => Val(Int(n)),
           None => return Err(RuntimeError::IntegerUnderflow),
         }
       },
       Bop(Seq, ref v1, ref e2) if v1.is_value() => {
         *e2.clone()
       },
-      Bop(Assign, ref v1, ref v2) if v1.is_var() && v2.is_value() => {
-        let x = v1.to_var()?;
-        self.state.assign(x, *v2.clone())?;
+      Bop(Assign, box Var(x), box Val(v)) => {
+        self.state.assign(x, Val(v.clone()))?;
         debug!("done assigning {:?}", self.state.mem);
-        *v2.clone()
+        Val(v)
       },
-      Ternary(box Bool(b), box e1, box e2) => {
+      Ternary(box Val(Bool(b)), box e1, box e2) => {
         match b {
           true => e1,
           false => e2,
@@ -136,7 +136,7 @@ impl Interpreter {
       // https://github.com/rust-lang/rfcs/issues/1006
       FnCall(ref v1, ref es) if v1.is_func() && (|| es.iter().all(|v| v.is_value()))() => {
         match **v1 {
-          Func(ref name, ref e1, ref xs) => {
+          Val(Func(ref name, ref e1, ref xs)) => {
             self.state.begin_scope();
 
             // alloc the params
@@ -159,7 +159,7 @@ impl Interpreter {
         self.state.end_scope();
         *v1.clone()
       },
-      While(box Bool(b), e1o, _, e2o, e3) => {
+      While(box Val(Bool(b)), e1o, _, e2o, e3) => {
         match b {
           true => While(e1o.clone(), e1o, e2o.clone(), e2o, e3),
           false => *e3,
@@ -167,7 +167,7 @@ impl Interpreter {
       },
       Print(ref v1) if v1.is_value() => {
         println!("{}", v1);
-        Expr::Undefined
+        Val(Undefined)
       },
       /**
        * Search Cases

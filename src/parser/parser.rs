@@ -1,4 +1,4 @@
-use expr::{Expr, BinOp, UnOp, Dec};
+use expr::{Val, Expr, BinOp, UnOp, Dec};
 use parser::lexer::Lexer;
 use parser::token::Token;
 use parser::parser_error::ParserError;
@@ -116,12 +116,12 @@ impl Parser {
         self.eat(Token::Seq)?;
         let e3 = self.block()?;
 
-        let func = Expr::Func(Some(Box::new(v.clone())), Box::new(body.clone()), params);
+        let func = Expr::Val(Val::Func(Some(Box::new(v.clone())), Box::new(body.clone()), params));
 
         Ok(Expr::Decl(Dec::DConst, Box::new(v), Box::new(func), Box::new(e3)))
       },
       None => {
-        let func = Expr::Func(None, Box::new(body.clone()), params);
+        let func = Expr::Val(Val::Func(None, Box::new(body.clone()), params));
 
         // fn call rule
         if self.current_token == Token::LParen {
@@ -168,11 +168,11 @@ impl Parser {
     let e = match self.current_token() {
       Token::Int(n) => {
         self.eat(Token::Int(n.clone()))?;
-        Expr::Int(n)
+        Expr::Val(Val::Int(n))
       },
       Token::Bool(b) => {
         self.eat(Token::Bool(b.clone()))?;
-        Expr::Bool(b)
+        Expr::Val(Val::Bool(b))
       },
       Token::Var(s) => {
         self.eat(Token::Var(s.clone()))?;
@@ -246,7 +246,7 @@ impl Parser {
       },
       Token::EOF => {
         self.eat(Token::EOF)?;
-        Expr::Undefined
+        Expr::Val(Val::Undefined)
       },
       _ => {
         return Err(ParserError::InvalidToken(self.current_token(), String::from("parsing factor")))
@@ -346,7 +346,7 @@ impl Parser {
       node = match op {
         Token::Seq => {
           let e2 = match self.current_token() {
-            Token::RBracket => Expr::Undefined,
+            Token::RBracket => Expr::Val(Val::Undefined),
             _ => self.statement()?,
           };
 

@@ -34,26 +34,32 @@ pub enum Dec {
 }
 
 #[derive(Clone, Debug, PartialEq)] 
-pub enum Expr {
+pub enum Val {
   Int(isize),
   Bool(bool),
-  Var(String),
   Undefined,
+  Func(Option<Box<Expr>>, Box<Expr>, Vec<Expr>),
+}
+
+#[derive(Clone, Debug, PartialEq)] 
+pub enum Expr {
+  Val(Val),
+  Var(String),
   Bop(BinOp, Box<Expr>, Box<Expr>),
   Uop(UnOp, Box<Expr>),
   Ternary(Box<Expr>, Box<Expr>, Box<Expr>),
   While(Box<Expr>, Box<Expr>, Box<Expr>, Box<Expr>, Box<Expr>),
   Decl(Dec, Box<Expr>, Box<Expr>, Box<Expr>),
-  Func(Option<Box<Expr>>, Box<Expr>, Vec<Expr>),
   FnCall(Box<Expr>, Vec<Expr>),
   Scope(Box<Expr>),
   Print(Box<Expr>),
 }
 
+
 impl Expr {
   pub fn is_func(&self) -> bool {
     match *self {
-      Func(_, _, _) => true,
+      Val(Val::Func(_, _, _)) => true,
       _ => false,
     }
   }
@@ -67,7 +73,7 @@ impl Expr {
 
   pub fn is_value(&self) -> bool {
     match *self {
-      Int(_) | Bool(_) | Func(_, _, _) | Undefined => true,
+      Val(_) => true,
       _ => false,
     }
   }
@@ -83,8 +89,8 @@ impl Expr {
 impl fmt::Display for Expr {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
-      Int(n) => write!(f, "{}", n),
-      Bool(b) => write!(f, "{}", b),
+      Val(Val::Int(n)) => write!(f, "{}", n),
+      Val(Val::Bool(b)) => write!(f, "{}", b),
       _ => write!(f, "cannot print this thing")
     }
   }
