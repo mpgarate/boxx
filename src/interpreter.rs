@@ -195,16 +195,16 @@ impl Interpreter {
       Ternary(box e1, e2, e3) => {
         Ternary(Box::new(self.step(e1)?), e2, e3)
       },
-      While(ref e1, ref e1o, ref v2, ref e2o, ref e3) if v2.is_value() => {
-        While(Box::new(self.step(*e1.clone())?), e1o.clone(), v2.clone(), e2o.clone(), e3.clone())
+      While(box e1, e1o, box Val(v), e2o, e3) => {
+        While(Box::new(self.step(e1)?), e1o, Box::new(Val(v)), e2o, e3)
       },
-      While(e1, e1o, e2, e2o, e3) => {
-        While(e1, e1o, Box::new(self.step(*e2)?), e2o, e3)
+      While(e1, e1o, box e2, e2o, e3) => {
+        While(e1, e1o, Box::new(self.step(e2)?), e2o, e3)
       },
-      Decl(dt, addr, e1, e2) => {
-        Decl(dt, Box::new(*addr.clone()), Box::new(self.step(*e1)?), e2)
+      Decl(dt, box addr, box e1, e2) => {
+        Decl(dt, Box::new(addr.clone()), Box::new(self.step(e1)?), e2)
       },
-      FnCall(ref v1, ref args) if v1.is_func() => {
+      FnCall(f @ box Val(Func(_, _, _)), args) => {
         let mut found_nonvalue = false;
 
         let stepped_args: Result<Vec<Expr>> = args.iter().map(|e| {
@@ -216,16 +216,16 @@ impl Interpreter {
           }
         }).collect();
 
-        FnCall(v1.clone(), stepped_args?)
+        FnCall(f, stepped_args?)
       },
-      FnCall(e1, args) => {
-        FnCall(Box::new(self.step(*e1)?), args)
+      FnCall(box e1, args) => {
+        FnCall(Box::new(self.step(e1)?), args)
       },
-      Scope(e1) => {
-        Scope(Box::new(self.step(*e1)?))
+      Scope(box e1) => {
+        Scope(Box::new(self.step(e1)?))
       },
-      Print(e1) => {
-        Print(Box::new(self.step(*e1)?))
+      Print(box e1) => {
+        Print(Box::new(self.step(e1)?))
       },
     };
 
