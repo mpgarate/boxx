@@ -55,11 +55,11 @@ impl Interpreter {
       Bop(Or, box Val(Bool(b1)), box Val(Bool(b2))) => {
         Val(Bool(b1 || b2))
       },
-      Bop(Eq, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Val(Bool(*e1 == *e2))
+      Bop(Eq, box Val(v1), box Val(v2)) => {
+        Val(Bool(v1 == v2))
       },
-      Bop(Ne, ref e1, ref e2) if e1.is_value() && e2.is_value() => {
-        Val(Bool(*e1 != *e2))
+      Bop(Ne, box Val(v1), box Val(v2)) => {
+        Val(Bool(v1 != v2))
       },
       Bop(Mod, box Val(Int(n1)), box Val(Int(n2))) => {
         // rust % gives the remainder, not modulus
@@ -112,10 +112,10 @@ impl Interpreter {
       Bop(Seq, box Val(_), box e1) => {
         e1
       },
-      Bop(Assign, box Var(x), box Val(v)) => {
-        self.state.assign(x, Val(v.clone()))?;
+      Bop(Assign, box Var(x), box v @ Val(_)) => {
+        self.state.assign(x, v.clone())?;
         debug!("done assigning {:?}", self.state.mem);
-        Val(v)
+        v
       },
       Ternary(box Val(Bool(b)), box e1, box e2) => {
         match b {
@@ -155,9 +155,9 @@ impl Interpreter {
           _ => return Err(RuntimeError::UnexpectedExpr("expected Func".to_string(), *v1.clone()))
         }
       },
-      Scope(box Val(v)) => {
+      Scope(box v @ Val(_)) => {
         self.state.end_scope();
-        Val(v)
+        v
       },
       While(box Val(Bool(b)), e1o, _, e2o, e3) => {
         match b {
@@ -172,17 +172,17 @@ impl Interpreter {
       /**
        * Search Cases
        */
-      Bop(op, box Val(v1), box e2) => {
+      Bop(op, v1 @ box Val(_), box e2) => {
         Bop(
           op,
-          Box::new(Val(v1)),
+          v1,
           Box::new(self.step(e2)?)
         )
       },
-      Bop(Assign, box Var(v1), box e2) => {
+      Bop(Assign, v1 @ box Var(_), box e2) => {
         Bop(
           Assign,
-          Box::new(Var(v1)),
+          v1,
           Box::new(self.step(e2)?)
         )
       },

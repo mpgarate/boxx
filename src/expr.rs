@@ -64,13 +64,6 @@ impl Expr {
     }
   }
 
-  pub fn is_var(&self) -> bool {
-    match *self {
-      Var(_) => true,
-      _ => false,
-    }
-  }
-
   pub fn is_value(&self) -> bool {
     match *self {
       Val(_) => true,
