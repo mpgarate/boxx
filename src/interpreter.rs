@@ -204,19 +204,18 @@ impl Interpreter {
       Decl(dt, box addr, box e1, e2) => {
         Decl(dt, Box::new(addr.clone()), Box::new(self.step(e1)?), e2)
       },
-      FnCall(f @ box Val(Func(_, _, _)), args) => {
-        let mut found_nonvalue = false;
-
-        let stepped_args: Result<Vec<Expr>> = args.iter().map(|e| {
-          if !found_nonvalue && !e.is_value() {
-            found_nonvalue = true;
-            self.step(e.clone())
-          } else {
-            Ok(e.clone())
+      FnCall(f @ box Val(Func(_, _, _)), mut args) => {
+        // find the first nonvalue arg and call step() on it
+        if let Some(index) = args.iter().position(|e| {
+          match e {
+            &Expr::Val(_) => false,
+            _ => true,
           }
-        }).collect();
+        }) {
+          args[index] = self.step(args[index].clone())?
+        }
 
-        FnCall(f, stepped_args?)
+        FnCall(f, args)
       },
       FnCall(box e1, args) => {
         FnCall(Box::new(self.step(e1)?), args)
