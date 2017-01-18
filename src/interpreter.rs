@@ -123,13 +123,13 @@ impl Interpreter {
           false => e2,
         }
       },
-      Decl(DConst, box Var(x), box Val(v1), box e1) => {
-        self.state.alloc_const(x, Val(v1))?;
+      Decl(DConst, box Var(x), box v1 @ Val(_), box e1) => {
+        self.state.alloc_const(x, v1)?;
         e1
       },
-      Decl(DVar, box Var(x), box Val(v1), box e1) => {
+      Decl(DVar, box Var(x), box v1 @ Val(_), box e1) => {
         debug!("allocing {:?}", v1);
-        self.state.alloc(x, Val(v1))?;
+        self.state.alloc(x, v1)?;
         e1
       },
       // lambda lift so we can use iter() in guard
@@ -195,8 +195,8 @@ impl Interpreter {
       Ternary(box e1, e2, e3) => {
         Ternary(Box::new(self.step(e1)?), e2, e3)
       },
-      While(box e1, e1o, box Val(v), e2o, e3) => {
-        While(Box::new(self.step(e1)?), e1o, Box::new(Val(v)), e2o, e3)
+      While(box e1, e1o, v @ box Val(_), e2o, e3) => {
+        While(Box::new(self.step(e1)?), e1o, v, e2o, e3)
       },
       While(e1, e1o, box e2, e2o, e3) => {
         While(e1, e1o, Box::new(self.step(e2)?), e2o, e3)
@@ -208,7 +208,7 @@ impl Interpreter {
         // find the first nonvalue arg and call step() on it
         if let Some(index) = args.iter().position(|e| {
           match e {
-            &Expr::Val(_) => false,
+            &Val(_) => false,
             _ => true,
           }
         }) {
