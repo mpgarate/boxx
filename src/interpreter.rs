@@ -144,8 +144,8 @@ impl Interpreter {
           }
 
           // alloc the fn body for named functions
-          if let Some(ref s) = *name {
-            self.state.alloc(s.to_var()?, *v1.clone())?;
+          if let Some(box Var(ref s)) = *name {
+            self.state.alloc(s.clone(), *v1.clone())?;
           }
 
           Scope(e1.clone())
