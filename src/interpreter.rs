@@ -135,7 +135,7 @@ impl Interpreter {
       // lambda lift so we can use iter() in guard
       // https://github.com/rust-lang/rfcs/issues/1006
       FnCall(ref v1, ref es) if v1.is_func() && (|| es.iter().all(|v| v.is_value()))() => {
-        if let box Val(Func(name, e1, xs)) = v1.clone() {
+        if let box Val(Func(ref name, ref e1, ref xs)) = *v1 {
           self.state.begin_scope();
 
           // alloc the params
@@ -144,11 +144,11 @@ impl Interpreter {
           }
 
           // alloc the fn body for named functions
-          if let Some(s) = name {
+          if let Some(ref s) = *name {
             self.state.alloc(s.to_var()?, *v1.clone())?;
           }
 
-          Scope(e1)
+          Scope(e1.clone())
         } else {
           return Err(RuntimeError::UnexpectedExpr("expected Func".to_string(), *v1.clone()))
         }
