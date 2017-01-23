@@ -8,6 +8,7 @@ use expr::Dec::*;
 use state::State;
 use runtime_error::RuntimeError;
 use std::result;
+use std::mem;
 
 pub type Result<T> = result::Result<T, RuntimeError>;
 
@@ -200,7 +201,7 @@ impl Interpreter {
         While(e1, e1o, Box::new(self.step(e2)?), e2o, e3)
       },
       Decl(dt, box addr, box e1, e2) => {
-        Decl(dt, Box::new(addr.clone()), Box::new(self.step(e1)?), e2)
+        Decl(dt, Box::new(addr), Box::new(self.step(e1)?), e2)
       },
       FnCall(f @ box Val(Func(_, _, _)), mut args) => {
         // find the first nonvalue arg and call step() on it
@@ -210,7 +211,10 @@ impl Interpreter {
             _ => true,
           }
         }) {
-          args[index] = self.step(args[index].clone())?
+          // temporary placeholder so we can safely move the value
+          // this ensures good vec state in between when data is read and rewritten
+          let expr = mem::replace(&mut args[index], Val(Undefined)); 
+          args[index] = self.step(expr)?;
         }
 
         FnCall(f, args)
