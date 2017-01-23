@@ -141,7 +141,11 @@ impl Interpreter {
 
           // alloc the params
           for (xn, en) in xs.iter().zip(es.iter()) {
-            self.state.alloc(xn.to_var()?, en.clone())?;
+            if let &Var(ref x) = xn {
+              self.state.alloc(x.clone(), en.clone())?;
+            } else {
+              return Err(RuntimeError::InvalidTypeConversion("var".to_string(), xn.clone()));
+            }
           }
 
           // alloc the fn body for named functions

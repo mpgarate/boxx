@@ -1,5 +1,4 @@
 use expr::Expr::*;
-use runtime_error::RuntimeError;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)] 
@@ -68,13 +67,6 @@ impl Expr {
     match *self {
       Val(_) => true,
       _ => false,
-    }
-  }
-
-  pub fn to_var(&self) -> Result<String, RuntimeError> {
-    match *self {
-      Var(ref x) => Ok(x.clone()),
-      _ => Err(RuntimeError::InvalidTypeConversion("var".to_string(), self.clone())),
     }
   }
 }
