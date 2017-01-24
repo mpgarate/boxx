@@ -138,7 +138,7 @@ impl Interpreter {
       FnCall(
         box Val(Func(ref name, ref e1, ref xs)),
         ref es
-      ) if (|| es.iter().all(|v| v.is_value()))() => {
+      ) if (|| es.iter().all(|v| if let Val(_) = *v { true } else { false }))() => {
         self.state.begin_scope();
 
         // alloc the params
@@ -252,7 +252,7 @@ impl Interpreter {
       debug!("--- iterating on e {:?} ", e);
       debug!("--- iterating on m {:?} ", self.state.mem);
       num_iterations += 1;
-      if e.is_value() {
+      if let Val(_) = e {
         debug!("--- iterations: {}", num_iterations);
         return Ok(e.clone());
       } else {

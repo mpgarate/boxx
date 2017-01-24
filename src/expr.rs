@@ -1,4 +1,3 @@
-use expr::Expr::*;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)] 
@@ -52,16 +51,6 @@ pub enum Expr {
   FnCall(Box<Expr>, Vec<Expr>),
   Scope(Box<Expr>),
   Print(Box<Expr>),
-}
-
-
-impl Expr {
-  pub fn is_value(&self) -> bool {
-    match *self {
-      Val(_) => true,
-      _ => false,
-    }
-  }
 }
 
 impl fmt::Display for Val {
