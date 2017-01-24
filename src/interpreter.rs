@@ -135,28 +135,27 @@ impl Interpreter {
       },
       // lambda lift so we can use iter() in guard
       // https://github.com/rust-lang/rfcs/issues/1006
-      FnCall(ref v1, ref es) if v1.is_func() && (|| es.iter().all(|v| v.is_value()))() => {
-        if let box Val(Func(ref name, ref e1, ref xs)) = *v1 {
-          self.state.begin_scope();
+      FnCall(
+        box Val(Func(ref name, ref e1, ref xs)),
+        ref es
+      ) if (|| es.iter().all(|v| v.is_value()))() => {
+        self.state.begin_scope();
 
-          // alloc the params
-          for (xn, en) in xs.iter().zip(es.iter()) {
-            if let &Var(ref x) = xn {
-              self.state.alloc(x.clone(), en.clone())?;
-            } else {
-              return Err(RuntimeError::InvalidTypeConversion("var".to_string(), xn.clone()));
-            }
+        // alloc the params
+        for (xn, en) in xs.iter().zip(es.iter()) {
+          if let &Var(ref x) = xn {
+            self.state.alloc(x.clone(), en.clone())?;
+          } else {
+            return Err(RuntimeError::InvalidTypeConversion("var".to_string(), xn.clone()));
           }
-
-          // alloc the fn body for named functions
-          if let Some(box Var(ref s)) = *name {
-            self.state.alloc(s.clone(), *v1.clone())?;
-          }
-
-          Scope(e1.clone())
-        } else {
-          return Err(RuntimeError::UnexpectedExpr("expected Func".to_string(), *v1.clone()))
         }
+
+        // alloc the fn body for named functions
+        if let Some(box Var(ref s)) = *name {
+          self.state.alloc(s.clone(), Val(Func(name.clone(), e1.clone(), xs.clone())))?;
+        }
+
+        Scope(e1.clone())
       },
       Scope(box v @ Val(_)) => {
         self.state.end_scope();

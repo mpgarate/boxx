@@ -56,13 +56,6 @@ pub enum Expr {
 
 
 impl Expr {
-  pub fn is_func(&self) -> bool {
-    match *self {
-      Val(Val::Func(_, _, _)) => true,
-      _ => false,
-    }
-  }
-
   pub fn is_value(&self) -> bool {
     match *self {
       Val(_) => true,
