@@ -144,7 +144,7 @@ impl Interpreter {
         // alloc the params
         for (xn, en) in xs.iter().zip(es.iter()) {
           if let &Var(ref x) = xn {
-            self.state.alloc(x.clone(), en.clone())?;
+            self.state.alloc(x.to_string(), en.clone())?;
           } else {
             return Err(RuntimeError::InvalidTypeConversion("var".to_string(), xn.clone()));
           }
@@ -254,9 +254,9 @@ impl Interpreter {
       num_iterations += 1;
       if let Val(_) = e {
         debug!("--- iterations: {}", num_iterations);
-        return Ok(e.clone());
+        return Ok(e);
       } else {
-        e = self.step(e.clone())?;
+        e = self.step(e)?;
       }
     }
   }
