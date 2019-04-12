@@ -69,7 +69,7 @@ impl Parser {
 
     while token != Token::RParen {
       debug!("getting fn decl params");
-      match token.clone() {
+      match token {
         Token::Var(s) => {
           self.eat(Token::Var(s.clone()))?;
           params.push(Expr::Var(s));
@@ -116,12 +116,12 @@ impl Parser {
         self.eat(Token::Seq)?;
         let e3 = self.block()?;
 
-        let func = Expr::Val(Val::Func(Some(Box::new(v.clone())), Box::new(body.clone()), params));
+        let func = Expr::Val(Val::Func(Some(Box::new(v.clone())), Box::new(body), params));
 
         Ok(Expr::Decl(Dec::DConst, Box::new(v), Box::new(func), Box::new(e3)))
       },
       None => {
-        let func = Expr::Val(Val::Func(None, Box::new(body.clone()), params));
+        let func = Expr::Val(Val::Func(None, Box::new(body), params));
 
         // fn call rule
         if self.current_token == Token::LParen {

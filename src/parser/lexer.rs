@@ -13,9 +13,8 @@ impl Lexer {
   }
 
   fn advance(&mut self, n: usize) {
-    let text = self.text.clone();
-    let (_, t) = text.split_at(n);
-    self.text = t.to_string();
+    self.text = self.text.split_at(n).1.to_string()
+
   }
 
   fn lex_integer(&mut self) -> Result<Token, LexerError> {
