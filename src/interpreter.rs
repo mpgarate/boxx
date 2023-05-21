@@ -134,10 +134,9 @@ impl Interpreter {
             FnCall(e1, args) => {
                 match (*e1, args) {
                     (Val(Func(ref name, ref e1, ref xs)), ref es)
-                        if (|| {
-                            es.iter()
-                                .all(|v| if let Val(_) = *v { true } else { false })
-                        })() =>
+                        if es
+                            .iter()
+                            .all(|v| if let Val(_) = *v { true } else { false }) =>
                     {
                         self.state.begin_scope();
 
@@ -180,8 +179,6 @@ impl Interpreter {
                         FnCall(Box::new(f), args)
                     }
                     (e1, args) => FnCall(Box::new(self.step(e1)?), args),
-                    // lambda lift so we can use iter() in guard
-                    // https://github.com/rust-lang/rfcs/issues/1006
                 }
             }
             Scope(e1) => match *e1 {
