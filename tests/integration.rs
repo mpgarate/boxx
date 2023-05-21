@@ -139,7 +139,7 @@ mod tests {
       Ok(Expr::Val(Val::Int(2))),
       boxx("
         var i = 0;
-        i = i + 2; 
+        i = i + 2;
         /* not doing this i = i + 1; */
         i
       ")
@@ -294,7 +294,6 @@ mod tests {
       boxx("if (true && false) { 32 } else if (!true && true) { 33 } else { 34 }")
     );
 
-    
     assert_eq!(
       Ok(Expr::Val(Val::Int(32))),
       boxx("if (true || false) { 32 } else if (!true && true) { 33 } else { 34 }")
@@ -417,7 +416,6 @@ mod tests {
 
     // using let keyword again re-binds value
     assert_eq!(Ok(Expr::Val(Val::Int(5))), boxx("let x = 2; let x = 3; x + 2"));
-
     assert_eq!(Ok(Expr::Val(Val::Int(52))), boxx("let underscore_name = 51; 1 + underscore_name"));
   }
 
