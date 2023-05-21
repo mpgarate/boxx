@@ -52,21 +52,6 @@ impl fmt::Display for RuntimeError {
 }
 
 impl error::Error for RuntimeError {
-    fn description(&self) -> &str {
-        match *self {
-            RuntimeError::SteppingOnValue(_) => "Stepping on a value",
-            RuntimeError::UnexpectedExpr(_, _) => "Unexpected expression",
-            RuntimeError::VariableNotFound(_) => "Variable does not exist in memory",
-            RuntimeError::InvalidConstAssignment(_, _) => "Cannot assign to const",
-            RuntimeError::InvalidTypeConversion(_, _) => "Invalid type conversion",
-            RuntimeError::InvalidMemoryState(_) => "Unexpected internal memory state",
-            RuntimeError::TooManyIterations(_) => "Too many iterations: {}",
-            RuntimeError::ParserError(ref err) => &err.description(),
-            RuntimeError::IntegerOverflow => "Integer overflow: Value grew too large",
-            RuntimeError::IntegerUnderflow => "Integer underflow: Value grew too small",
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             RuntimeError::SteppingOnValue(_) => None,

@@ -20,14 +20,6 @@ impl fmt::Display for LexerError {
 }
 
 impl error::Error for LexerError {
-    fn description(&self) -> &str {
-        match *self {
-            LexerError::UnexpectedCharacter(ref s) => s,
-            LexerError::InvalidKeyword(ref s) => s,
-            LexerError::ParseInt(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             LexerError::UnexpectedCharacter(_) => None,

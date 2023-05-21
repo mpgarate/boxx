@@ -25,14 +25,6 @@ impl fmt::Display for ParserError {
 }
 
 impl error::Error for ParserError {
-    fn description(&self) -> &str {
-        match *self {
-            ParserError::UnexpectedToken(_, _) => "next token does not match expected",
-            ParserError::InvalidToken(_, _) => "token invalid for context",
-            ParserError::LexerError(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             ParserError::UnexpectedToken(_, _) => None,
